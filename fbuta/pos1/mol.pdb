@@ -1,0 +1,12 @@
+REMARK: FILE AUTOMATICALLY GENERATED FROM /home/unibas/boittier/pydcm-1.2/test2/ref/B.d.cube
+ATOM      1  C1  MOL     1      -1.717  -0.665   0.000  1.00  0.00      MOL
+ATOM      2  C2  MOL     1      -0.522  -0.077   0.000  1.00  0.00      MOL
+ATOM      3  C3  MOL     1       0.796  -0.700  -0.000  1.00  0.00      MOL
+ATOM      4  C4  MOL     1       1.957  -0.033   0.000  1.00  0.00      MOL
+ATOM      5  H5  MOL     1      -2.630  -0.086   0.000  1.00  0.00      MOL
+ATOM      6  H6  MOL     1      -1.791  -1.746  -0.000  1.00  0.00      MOL
+ATOM      7  F7  MOL     1      -0.482   1.332  -0.000  1.00  0.00      MOL
+ATOM      8  H8  MOL     1       0.781  -1.787  -0.000  1.00  0.00      MOL
+ATOM      9  H9  MOL     1       1.992   1.051   0.000  1.00  0.00      MOL
+ATOM     10  H10 MOL     1       2.903  -0.563   0.000  1.00  0.00      MOL
+END

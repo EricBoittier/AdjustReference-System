@@ -1,0 +1,71 @@
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 1)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 2)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 3)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 4)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 5)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 6)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 7)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 8)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 9)
+==============================
+*** Open Babel Warning  in parseAtomRecord
+  WARNING: Problems reading a PDB file
+  Problems reading a HETATM or ATOM record.
+  According to the PDB specification,
+  columns 77-78 should contain the element symbol of an atom.
+  but OpenBabel found '  ' (atom 10)
+1 molecule converted
