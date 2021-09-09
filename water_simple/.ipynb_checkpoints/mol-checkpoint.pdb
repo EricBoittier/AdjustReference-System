@@ -1,0 +1,5 @@
+REMARK: FILE AUTOMATICALLY GENERATED FROM /home/unibas/boittier/pydcm-1.2/water_5_5_4/ref/Water_5_5_4.den.cube
+ATOM      1  O1  MOL     1       0.000   0.000   0.122  1.00  0.00      MOL
+ATOM      2  H2  MOL     1       0.000   0.766  -0.490  1.00  0.00      MOL
+ATOM      3  H3  MOL     1       0.000  -0.766  -0.490  1.00  0.00      MOL
+END
