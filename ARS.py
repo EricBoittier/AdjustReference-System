@@ -13,6 +13,19 @@ from Cube import read_charges_refined, read_cube
 
 BOHR_TO_ANGSTROM = 0.529177
 
+def usage():
+    s = """
+
+    Take the MDCM charges from a conformation in cubefile_1 and 
+    return the position of the charges (in local, and new global coordinates) 
+    for the second conformation
+
+    ARS.py charges.xyz cubefile_1.cub cubefile_2.cub frames.txt
+    
+    """
+    print(s)
+
+
 def plot1():
     plot_labels = False
     plot_pos_1 = True
@@ -166,7 +179,6 @@ def get_local_axis(atom_pos, frame_atoms):
         ex1[1] = ex1[1]/re_x
         ex1[2] = ex1[2]/re_x   
         ex2 = ex1
-
         ex1 = np.cross(ey1, ez1)
         ex2 = ex1
         
@@ -187,201 +199,184 @@ def get_local_axis(atom_pos, frame_atoms):
     return frame_vectors
 
 
-#  Define Variables
+def read_cube_file(filepath):
+    pcube_data, pcube_meta = read_cube(pcube_2)
+    atom_positions_plus = []
+    atom_names = []
+    for i in pcube_meta["atoms"]:
+        atom = list(i[1])
+        atom_positions_plus.append([x *BOHR_TO_ANGSTROM for x in atom[1:]])
+        atom_names.append(atom[1])
+    return atom_positions_plus, atom_names
 
-# # F-butadiene example
-folder = "fbuta/pos1/"
-xyz_file_name = home_path + folder + "36_charges_refined.xyz"
-pcube = home_path + folder + "B.p.cube"
-pcube_2 = home_path + "fbuta/pos2/" + "B.p.cube"
-frame_file = home_path + folder + "frames.txt"
+def read_mdcm_xyz(filepath):
+    xyz_file = open(filepath).readlines()
+    n_charges = int(xyz_file[0])
+    #  read number of charges from first line (xyz format)
+    charge_lines = xyz_file[2:n_charges+2]
+    # Read atoms and charges
+    c_positions = []
+    c_charges = []
+    for charge in charge_lines:
+        on, x, y, z, c = charge.split()
+        c_positions.append([float(x), float(y) , float(z)])
+        c_charges.append(float(c))
+    return c_positions, c_charges
 
-# Water Example
-#folder = "water_simple/"
-# folder = "water/"
-# xyz_file_name = home_path + folder + "8_charges_refined.xyz"
-# pcube = home_path + folder + "Water_5_5_4.pot.cube"
-# frame_file = home_path + folder + "frames.txt"
 
-# Open XYZ file
-xyz_file = open(xyz_file_name).readlines()
-#  read number of charges from first line (xyz format)
-n_charges = int(xyz_file[0])
-charge_lines = xyz_file[2:n_charges+2]
-# Read atoms and charges
-c_positions = []
-c_charges = []
-for charge in charge_lines:
-    on, x, y, z, c = charge.split()
-    c_positions.append([float(x), float(y) , float(z)])
-    c_charges.append(float(c))
- 
-# Open Cube file
-pcube_data, pcube_meta = read_cube(pcube_2)
-atom_positions_plus = []
-atom_names = []
-for i in pcube_meta["atoms"]:
-    atom = list(i[1])
-    atom_positions_plus.append([x *BOHR_TO_ANGSTROM for x in atom[1:]])
-    atom_names.append(atom[1])
-n_atoms = len(atom_names)
+if __name__ == "__main__":
+    """ 
+    ARS.py charges.xyz cubefile_1.cub cubefile_2.cub frames.txt output_filename.xyz
+    """
+    xyz_file_name = sys.argv[1]
+    pcube = sys.argv[2]
+    pcube_2 = sys.argv[3]
+    frame_file = sys.argv[4]
 
-# Open Cube file
-pcube_data, pcube_meta = read_cube(pcube)
-atom_positions = []
-atom_names = []
-for i in pcube_meta["atoms"]:
-    atom = list(i[1])
-    atom_positions.append([x *BOHR_TO_ANGSTROM for x in atom[1:]])
-    atom_names.append(atom[1])
-n_atoms = len(atom_names)
-
-# Match each charge to a nucleus
-charge_atom_associations = []
-atom_charge_dict = {}
-for i_charge in range(n_charges):
-    #  initial distance, which can be compared to find smaller values
-    min_distance = np.Inf 
-
-    for j_atom in range(n_atoms):       
-        d = distance.euclidean(c_positions[i_charge], atom_positions[j_atom])
-        if d < min_distance:
-            atom_association = j_atom
-            min_distance = d
+    # Open XYZ file
+    c_positions, c_charges = read_mdcm_xyz(xyz_file_name)
+    n_charges = len(c_charges)
     
-    charge_atom_associations.append([i_charge, atom_association])
+    # Open Cube files
+    atom_positions, atom_names = read_cube_file(pcube)
+    atom_positions_plus, atom_names = read_cube_file(pcube_2)
+    n_atoms = len(atom_names)
+
+    # Match each charge to a nucleus
+    charge_atom_associations = []
+    atom_charge_dict = {}
+    for i_charge in range(n_charges):
+        #  initial distance, which can be compared to find smaller values
+        min_distance = np.Inf 
+
+        for j_atom in range(n_atoms):       
+            d = distance.euclidean(c_positions[i_charge], atom_positions[j_atom])
+            if d < min_distance:
+                atom_association = j_atom
+                min_distance = d
+        
+        charge_atom_associations.append([i_charge, atom_association])
+        
+        if atom_association not in list(atom_charge_dict.keys()):
+            atom_charge_dict[atom_association] = [i_charge]
+        else:
+            atom_charge_dict[atom_association].append(i_charge)
+
+
+    """
+    Check that all atoms/charges are included in 
+    """
+    #  Atoms
+    set1 = set(range(n_atoms))
+    set2 = set(atom_charge_dict.keys())
+    if set1 != set2:
+        print(set1, set2)
+        print("Something is wrong with Atoms")
+        sys.exit()
+    #  Charges
+    set1 = set(range(n_charges))
+    flat_list = []
+    for sublist in list(atom_charge_dict.values()):
+        for item in sublist:
+            flat_list.append(item)
+    set2 = set(flat_list)
+    if set1 != set2:
+        print(set1, set2)
+        print("Something is wrong with Charges")
+        sys.exit()
+    print("atom_charge_dict: ", atom_charge_dict)
+        
+    # Get frames
+    frame = open(frame_file).readlines()
+    frame_atoms = []
+    frames = frame[1:]
+    n_frames = len(frames)
+    for f in frames:
+        a1, a2, a3 = f.split()
+        frame_atoms.append([int(a1), int(a2), int(a3)])
+
+    atom_positions = np.array(atom_positions)
+    frame_vectors_plus = get_local_axis(atom_positions_plus, frame_atoms)
+
+    # Calculate local axes and transform charges
+    # Calculate the new axes for each frame
+    frame_vectors = get_local_axis(atom_positions, frame_atoms)
+
+    """
+    Global ==> Local
+    """
+    #  Find the position of the charges in the local axes
+    #  Create a new array for the 'local' charges
+    c_pos_shape = np.array(c_positions).shape
+    c_positions_local = np.zeros(c_pos_shape)
     
-    if atom_association not in list(atom_charge_dict.keys()):
-        atom_charge_dict[atom_association] = [i_charge]
-    else:
-        atom_charge_dict[atom_association].append(i_charge)
+    used_atoms = []
+    for f in range(n_frames):
+        #  Loop through the atoms in the frame
+        print(frame_atoms[f])
+        for ai, atom_index in enumerate(frame_atoms[f]):
+            print(atom_index-1)
+            atom_index -= 1
+            if atom_index in list(atom_charge_dict.keys()) and atom_index not in used_atoms:
+
+                charges = atom_charge_dict[atom_index]
+                ex, ey, ez = frame_vectors[f][ai]
+                #  Find the associated charges for that atom, and loop
+                for charge in charges:
+                    c_pos_global = c_positions[charge]
+                    atom_pos_xyz = atom_positions[atom_index]
+                    
+                    #  Find the distance between the charge and the atom it belongs to
+                    r = np.array(c_pos_global) - np.array(atom_pos_xyz)
+                    
+                    local_x_pos =  np.dot(ex, r)
+                    local_y_pos =  np.dot(ey, r)
+                    local_z_pos =  np.dot(ez, r)
+
+                    c_positions_local[charge][0] = local_x_pos
+                    c_positions_local[charge][1] =  local_y_pos 
+                    c_positions_local[charge][2] = local_z_pos
+                    
+            used_atoms.append(atom_index)
 
 
-"""
-Check that all atoms/charges are included in 
-"""
-#  Atoms
-set1 = set(range(n_atoms))
-set2 = set(atom_charge_dict.keys())
-if set1 != set2:
-    print(set1, set2)
-    print("Something is wrong with Atoms")
-    sys.exit()
-#  Charges
-set1 = set(range(n_charges))
-flat_list = []
-for sublist in list(atom_charge_dict.values()):
-    for item in sublist:
-        flat_list.append(item)
-set2 = set(flat_list)
-if set1 != set2:
-    print(set1, set2)
-    print("Something is wrong with Charges")
-    sys.exit()
-print("atom_charge_dict: ", atom_charge_dict)
-    
-# Get frames
-frame = open(frame_file).readlines()
-frame_atoms = []
-frames = frame[1:]
-n_frames = len(frames)
-for f in frames:
-    a1, a2, a3 = f.split()
-    frame_atoms.append([int(a1), int(a2), int(a3)])
+    """
+    Local ==> Global
+    """
+    #  Find the position of the charges in the local axes
+    #  Create a new array for the 'local' charges
+    c_pos_shape = np.array(c_positions).shape
+    c_new_local = np.zeros(c_pos_shape)
+    c_positions_global = np.zeros(c_pos_shape)
 
-atom_positions = np.array(atom_positions)
-#  Random pertubation of atom positions to simulate a new conformation
-#atom_positions_plus = atom_positions + [[0.5, 0, 0], [0.5,0,0], [0.5,0,0]]
-#  Find the new axes for this conformation
-frame_vectors_plus = get_local_axis(atom_positions_plus, frame_atoms)
+    used_atoms = []
+    for f in range(n_frames):
+        #  Loop through the atoms in the frame
+        for ai, atom_index in enumerate(frame_atoms[f]):
+            print(atom_index-1)
+            atom_index -= 1
+            if atom_index in list(atom_charge_dict.keys()) and atom_index not in used_atoms:
+                charges = atom_charge_dict[atom_index]
+                ex, ey, ez = frame_vectors_plus[f][ai]
+                # Find the associated charges for that atom, and loop
+                for charge in charges:
+                    c_pos_local = c_positions_local[charge]
+                    atom_pos_xyz = atom_positions_plus[atom_index]
 
+                    c_l_x = c_pos_local[0] 
+                    c_l_y = c_pos_local[1] 
+                    c_l_z = c_pos_local[2]
+                                    
+                    x_vec =  np.multiply(ex, c_l_x)
+                    y_vec =  np.multiply(ey, c_l_y)
+                    z_vec =  np.multiply(ez, c_l_z)
 
+                    sum_of_components = x_vec + y_vec + z_vec
+                    print(atom_index, charges, sum_of_components)
+                    #  translate back to the center of atoms (for the new conformation)
+                    c_positions_global[charge] = sum_of_components + atom_pos_xyz
+                    
+            used_atoms.append(atom_index)
 
-# Calculate local axes and transform charges
-# Calculate the new axes for each frame
-frame_vectors = get_local_axis(atom_positions, frame_atoms)
-
-"""
-Global ==> Local
-"""
-#  Find the position of the charges in the local axes
-#  Create a new array for the 'local' charges
-c_pos_shape = np.array(c_positions).shape
-c_positions_local = np.zeros(c_pos_shape)
-used_atoms = []
-
-for f in range(n_frames):
-    #  Loop through the atoms in the frame
-    print(frame_atoms[f])
-    for ai, atom_index in enumerate(frame_atoms[f]):
-        print(atom_index-1)
-        atom_index -= 1
-        if atom_index in list(atom_charge_dict.keys()) and atom_index not in used_atoms:
-
-            charges = atom_charge_dict[atom_index]
-            ex, ey, ez = frame_vectors[f][ai]
-            #  Find the associated charges for that atom, and loop
-            for charge in charges:
-                c_pos_global = c_positions[charge]
-                atom_pos_xyz = atom_positions[atom_index]
-                
-                #  Find the distance between the charge and the atom it belongs to
-                r = np.array(c_pos_global) - np.array(atom_pos_xyz)
-                
-                local_x_pos =  np.dot(ex, r)
-                local_y_pos =  np.dot(ey, r)
-                local_z_pos =  np.dot(ez, r)
-
-                c_positions_local[charge][0] = local_x_pos
-                c_positions_local[charge][1] =  local_y_pos 
-                c_positions_local[charge][2] = local_z_pos
-                
-        used_atoms.append(atom_index)
-
-
-"""
-Local ==> Global
-"""
-#  Find the position of the charges in the local axes
-#  Create a new array for the 'local' charges
-c_pos_shape = np.array(c_positions).shape
-
-c_new_local = np.zeros(c_pos_shape)
-c_positions_global = np.zeros(c_pos_shape)
-
-print()
-print(list(atom_charge_dict.keys()))
-print()
-
-
-used_atoms = []
-for f in range(n_frames):
-    #  Loop through the atoms in the frame
-    for ai, atom_index in enumerate(frame_atoms[f]):
-        print(atom_index-1)
-        atom_index -= 1
-        if atom_index in list(atom_charge_dict.keys()) and atom_index not in used_atoms:
-            charges = atom_charge_dict[atom_index]
-            ex, ey, ez = frame_vectors_plus[f][ai]
-            # Find the associated charges for that atom, and loop
-            for charge in charges:
-                c_pos_local = c_positions_local[charge]
-                atom_pos_xyz = atom_positions_plus[atom_index]
-
-                c_l_x = c_pos_local[0] 
-                c_l_y = c_pos_local[1] 
-                c_l_z = c_pos_local[2]
-                                
-                x_vec =  np.multiply(ex, c_l_x)
-                y_vec =  np.multiply(ey, c_l_y)
-                z_vec =  np.multiply(ez, c_l_z)
-
-                sum_of_components = x_vec + y_vec + z_vec
-                print(atom_index, charges, sum_of_components)
-                #  translate back to the center of atoms (for the new conformation)
-                c_positions_global[charge] = sum_of_components + atom_pos_xyz
-                
-        used_atoms.append(atom_index)
-
-save_charges(c_positions_global, c_charges, filename="out_charges.xyz")
-plot1()
+    save_charges(c_positions_global, c_charges, filename="out_charges.xyz")
+    plot1()
