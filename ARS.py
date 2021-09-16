@@ -4,6 +4,8 @@ from scipy.spatial import distance
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import sqrt 
+import scipy.spatial.transform.Rotation.align_vectors as Kabsch
+
 #%matplotlib ipympl
 
 home_path = "/home/boittier/Documents/AdjustReference-System/"
@@ -377,6 +379,8 @@ if __name__ == "__main__":
                     c_positions_global[charge] = sum_of_components + atom_pos_xyz
                     
             used_atoms.append(atom_index)
+
+    print(Kabsch(c_positions_global, c_positions))
 
     save_charges(c_positions_global, c_charges, filename="out_charges.xyz")
     plot1()
