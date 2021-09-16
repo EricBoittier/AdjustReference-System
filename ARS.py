@@ -4,7 +4,7 @@ from scipy.spatial import distance
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from math import sqrt 
-import scipy.spatial.transform.Rotation.align_vectors as Kabsch
+from scipy.spatial.transform import Rotation as Kabsch
 
 #%matplotlib ipympl
 
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     pcube = sys.argv[2]
     pcube_2 = sys.argv[3]
     frame_file = sys.argv[4]
-
+    output_filename = sys.argv[5] 
     # Open XYZ file
     c_positions, c_charges = read_mdcm_xyz(xyz_file_name)
     n_charges = len(c_charges)
@@ -273,8 +273,8 @@ if __name__ == "__main__":
     set2 = set(atom_charge_dict.keys())
     if set1 != set2:
         print(set1, set2)
-        print("Something is wrong with Atoms")
-        sys.exit()
+        print("Something is wrong with Atoms?")
+        #sys.exit()
     #  Charges
     set1 = set(range(n_charges))
     flat_list = []
@@ -284,8 +284,8 @@ if __name__ == "__main__":
     set2 = set(flat_list)
     if set1 != set2:
         print(set1, set2)
-        print("Something is wrong with Charges")
-        sys.exit()
+        print("Something is wrong with Charges?")
+        #sys.exit()
     print("atom_charge_dict: ", atom_charge_dict)
         
     # Get frames
@@ -380,7 +380,7 @@ if __name__ == "__main__":
                     
             used_atoms.append(atom_index)
 
-    print(Kabsch(c_positions_global, c_positions))
+    print("RMSD using the Kabsch algorithm: {}".format(Kabsch.align_vectors(c_positions_global, c_positions)[1]))
 
-    save_charges(c_positions_global, c_charges, filename="out_charges.xyz")
+    save_charges(c_positions_global, c_charges, filename=output_filename)
     plot1()
