@@ -4,25 +4,20 @@ from scipy.spatial import distance
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation as Kabsch
-
-# %matplotlib ipympl
-
 home_path = "/home/boittier/Documents/AdjustReference-System/"
 # home_path = "/home/eric/Documents/PhD/AdjustReference-System/"
 sys.path.insert(1, home_path)
-from Cube import read_charges_refined, read_cube
+from Cube import read_cube
 
 BOHR_TO_ANGSTROM = 0.529177
 
 
 def usage():
-    s = """
-
-    Take the MDCM charges from a conformation in cubefile_1 and 
+    s = """Take the MDCM charges from a conformation in cubefile_1 and 
     return the position of the charges (in local, and new global coordinates) 
     for the second conformation
 
-    ARS.py charges.xyz cubefile_1.cub cubefile_2.cub frames.txt
+    ARS.py charges.xyz cubefile_1.cube cubefile_2.cube frames.txt
     
     """
     print(s)
@@ -139,7 +134,6 @@ def save_charges(charge_positions, charges, filename="out_charges.xyz"):
 
     c = 1
     for xyz, q in zip(charge_positions, charges):
-        print(c, xyz)
         c += 1
         if q < 0:
             letter = "O"
@@ -190,8 +184,6 @@ class ARS():
 
         self.c_positions_local = self.global_to_local()
         self.charge_positions_plus = self.local_to_global()
-
-
 
     def plot1(self):
         plot_labels = False
@@ -273,7 +265,6 @@ class ARS():
         print("atom_charge_dict: ", self.atom_charge_dict)
 
     def plot_axe(self, il, local_vector, atom_index, c="k"):
-        # print(il, local_vector, atom_index)
         atom_pos = self.atom_positions[atom_index]
         x = [atom_pos[0], atom_pos[0] + local_vector[0][0]]
         y = [atom_pos[1], atom_pos[1] + local_vector[0][1]]
@@ -322,9 +313,7 @@ class ARS():
         used_atoms = []
         for f in range(self.n_frames):
             #  Loop through the atoms in the frame
-            #  print(frame_atoms[f])
             for ai, atom_index in enumerate(self.frame_atoms[f]):
-                #  print(atom_index-1)
                 atom_index -= 1
                 if atom_index in list(self.atom_charge_dict.keys()) and atom_index not in used_atoms:
                     charges = self.atom_charge_dict[atom_index]
@@ -349,10 +338,10 @@ class ARS():
         return c_positions_local
 
     def save_charges_local(self, output_filename):
-        save_charges(self.c_positions_local, self.c_charges, filename="local_"+output_filename)
+        save_charges(self.c_positions_local, self.c_charges, filename="local_" + output_filename)
 
     def save_charges_global(self, output_filename):
-        save_charges(self.c_positions_global, self.c_charges, filename="global_"+output_filename)
+        save_charges(self.c_positions_global, self.c_charges, filename="global_" + output_filename)
 
     def get_distance_charges(self):
         return Kabsch(self.c_positions_global, self.c_positions)[1]
@@ -374,7 +363,6 @@ class ARS():
         for f in range(self.n_frames):
             #  Loop through the atoms in the frame
             for ai, atom_index in enumerate(self.frame_atoms[f]):
-                print(atom_index - 1)
                 atom_index -= 1
                 if atom_index in list(self.atom_charge_dict.keys()) and atom_index not in used_atoms:
                     charges = self.atom_charge_dict[atom_index]
@@ -393,7 +381,6 @@ class ARS():
                         z_vec = np.multiply(ez, c_l_z)
 
                         sum_of_components = x_vec + y_vec + z_vec
-                        print(atom_index, charges, sum_of_components)
                         #  translate back to the center of atoms (for the new conformation)
                         c_positions_global[charge] = sum_of_components + atom_pos_xyz
 
@@ -414,4 +401,6 @@ if __name__ == "__main__":
     ARS_obj = ARS(xyz_file_name, pcube, pcube_2, frame_file)
     ARS_obj.save_charges_global(output_filename)
     ARS_obj.save_charges_local(output_filename)
+    print(f"Distance between Atom configurations = {ARS_obj.get_distance_atoms()}")
+    print(f"Distance between Charge configurations = {ARS_obj.get_distance_charges()}")
     # plot1()
