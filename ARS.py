@@ -202,14 +202,14 @@ def get_local_axis(atom_pos, frame_atoms):
 
 
 def read_cube_file(filepath):
-    pcube_data, pcube_meta = read_cube(pcube_2)
-    atom_positions_plus = []
-    atom_names = []
+    pcube_data, pcube_meta = read_cube(filepath)
+    ap = []
+    an = []
     for i in pcube_meta["atoms"]:
         atom = list(i[1])
-        atom_positions_plus.append([x *BOHR_TO_ANGSTROM for x in atom[1:]])
-        atom_names.append(atom[1])
-    return atom_positions_plus, atom_names
+        ap.append([x *BOHR_TO_ANGSTROM for x in atom[1:]])
+        an.append(atom[1])
+    return ap, an
 
 def read_mdcm_xyz(filepath):
     xyz_file = open(filepath).readlines()
@@ -315,9 +315,9 @@ if __name__ == "__main__":
     used_atoms = []
     for f in range(n_frames):
         #  Loop through the atoms in the frame
-        print(frame_atoms[f])
+        #  print(frame_atoms[f])
         for ai, atom_index in enumerate(frame_atoms[f]):
-            print(atom_index-1)
+            #  print(atom_index-1)
             atom_index -= 1
             if atom_index in list(atom_charge_dict.keys()) and atom_index not in used_atoms:
 
@@ -383,4 +383,4 @@ if __name__ == "__main__":
     print("RMSD using the Kabsch algorithm: {}".format(Kabsch.align_vectors(c_positions_global, c_positions)[1]))
 
     save_charges(c_positions_global, c_charges, filename=output_filename)
-    plot1()
+    #plot1()
