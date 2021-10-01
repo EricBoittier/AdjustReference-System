@@ -11,6 +11,19 @@ from Cube import read_cube
 
 BOHR_TO_ANGSTROM = 0.529177
 
+# This is the straightforward approach as outlined in the answers to
+# "How do I calculate a dihedral angle given Cartesian coordinates?"
+def dihedral2(p):
+    b = p[:-1] - p[1:]
+    b[0] *= -1
+    v = np.array( [ v - (v.dot(b[1])/b[1].dot(b[1])) * b[1] for v in [b[0], b[2]] ] )
+    # Normalize vectors
+    v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1,1)
+    b1 = b[1] / np.linalg.norm(b[1])
+    x = np.dot(v[0], v[1])
+    m = np.cross(v[0], b1)
+    y = np.dot(m, v[1])
+    return np.degrees(np.arctan2( y, x ))
 
 def usage():
     s = """Take the MDCM charges from a conformation in cubefile_1 and 
@@ -193,6 +206,12 @@ class ARS():
         if pcube_2 is not None:
             self.charge_positions_plus = self.local_to_global()
             
+    
+    def get_dih(self, a,b,c,d):
+        atoms=self.atom_positions
+        p = np.array([atoms[a], atoms[b], atoms[c], atoms[d]])
+        return dihedral2(p)
+    
     def get_c_positions_local(self):
         return self.c_positions_local
 
