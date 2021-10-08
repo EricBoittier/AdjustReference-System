@@ -391,7 +391,7 @@ class ARS():
         save_charges(self.charge_positions_plus, self.c_charges, filename="global_" + output_filename)
 
     def get_distance_charges(self):
-        return Kabsch.align_vectors(self.c_positions_global, self.c_positions)[1]
+        return Kabsch.align_vectors(self.charge_positions_plus, self.c_positions)[1]
 
     def get_distance_atoms(self):
         return Kabsch.align_vectors(self.atom_positions, self.atom_positions_plus)[1]
