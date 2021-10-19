@@ -186,6 +186,7 @@ class ARS():
         for f in self.frames:
             a1, a2, a3 = f.split()
             self.frame_atoms.append([int(a1), int(a2), int(a3)])
+            
         #  Match charges to closest atoms
         self.charge_atom_associations, self.atom_charge_dict = self.match_charges()
 
@@ -209,6 +210,11 @@ class ARS():
     
     def get_dih(self, a,b,c,d):
         atoms=self.atom_positions
+        p = np.array([atoms[a], atoms[b], atoms[c], atoms[d]])
+        return dihedral2(p)
+    
+    def get_dih_2(self, a,b,c,d):
+        atoms=self.atom_positions_plus
         p = np.array([atoms[a], atoms[b], atoms[c], atoms[d]])
         return dihedral2(p)
 
@@ -385,10 +391,24 @@ class ARS():
         return c_positions_local
 
     def save_charges_local(self, output_filename):
-        save_charges(self.c_positions_local, self.c_charges, filename="local_" + output_filename)
+        output_filename_split = output_filename.split("/")
+        output_filename = "local_" + output_filename_split[-1]
+        output_filename = os.path.join(*output_filename_split[:-1], output_filename)
+        save_charges(self.c_positions_local, 
+                     self.c_charges, filename=output_filename)
+        
+    def set_charge_positions_plus(self, charge_positions):
+        self.charge_positions_plus = charge_positions
+        
+    def set_local_charge_positions(self, charge_positions):
+        self.c_positions_local = charge_positions
 
     def save_charges_global(self, output_filename):
-        save_charges(self.charge_positions_plus, self.c_charges, filename="global_" + output_filename)
+        output_filename_split = output_filename.split("/")
+        output_filename = "global_" + output_filename_split[-1]
+        output_filename = os.path.join(*output_filename_split[:-1], output_filename)
+        save_charges(self.charge_positions_plus, 
+                     self.c_charges, filename = output_filename)
 
     def get_distance_charges(self):
         return Kabsch.align_vectors(self.charge_positions_plus, self.c_positions)[1]
@@ -445,9 +465,19 @@ if __name__ == "__main__":
     pcube_2 = sys.argv[3]
     frame_file = sys.argv[4]
     output_filename = sys.argv[5]
+    
+    dih = False
+    if len(sys.argv) > 6:
+        dih = [int(x) for x in sys.argv[6].split("_")]
+
 
     ARS_obj = ARS(xyz_file_name, pcube, frame_file, pcube_2=pcube_2)
     ARS_obj.save_charges_global(output_filename)
     ARS_obj.save_charges_local(output_filename)
     print(f"Distance between Atom configurations = {ARS_obj.get_distance_atoms()}")
     print(f"Distance between Charge configurations = {ARS_obj.get_distance_charges()}")
+    
+    if dih:
+        dihedral = ARS_obj.get_dih_2(*dih)
+        print(f"Dihedral {dih} = {dihedral}")
+    
