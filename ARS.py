@@ -1,13 +1,17 @@
 import numpy as np
+from math import atan2
 import os, sys
 from scipy.spatial import distance
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.spatial.transform import Rotation as Kabsch
-home_path = "/home/boittier/Documents/AdjustReference-System/"
-# home_path = "/home/eric/Documents/PhD/AdjustReference-System/"
-sys.path.insert(1, home_path)
+# home_path = "/home/boittier/Documents/AdjustReference-System/"
+# # home_path = "/home/eric/Documents/PhD/AdjustReference-System/"
+# sys.path.insert(1, home_path)
 from Cube import read_cube
+from numpy import (array, dot, arccos, clip)
+from numpy.linalg import norm
+
 
 BOHR_TO_ANGSTROM = 0.529177
 
@@ -61,8 +65,10 @@ def read_mdcm_xyz(filepath):
     return c_positions, c_charges
 
 
-def get_local_axis(atom_pos, frame_atoms):
+def get_local_axis(atom_pos, frame_atoms, method="bond"):
     """
+    method: "bond" z-axis a-b
+            "bisector" z-axis = bisector of a-b,b-c
     Inputs:
                 atom_positions, frames
     Returns:
@@ -89,8 +95,25 @@ def get_local_axis(atom_pos, frame_atoms):
 
         #  Z axes
         ez1 = np.array([b1_x, b1_y, b1_z])
-        ez2 = np.array([b1_x, b1_y, b1_z])
         ez3 = np.array([b2_x, b2_y, b2_z])
+        
+        #  finding ez2 for a given method
+        if method=="bond":
+            """ Calculate Z defined along bond a-b
+            """
+            ez2 = np.array([b1_x, b1_y, b1_z])
+            
+        elif method=="bisector":
+            """ Calculate Z(2) as bisector
+            """
+            bi_x = ez1[0] + ez1[2]
+            bi_y = ez2[0] + ez2[2]
+            bi_z = ez3[0] + ez3[2]
+            r_bi = sqrt(bi_x**2 + bi_y**2 + bi_z**2) 
+            ez2 = np.array([bi_x/r_bi, bi_y/r_bi, bi_z/r_bi])
+        
+        else:
+            assert False, "No valid method supplied!"
 
         #  Y axes
         ey1 = np.zeros(3)
@@ -157,7 +180,8 @@ def save_charges(charge_positions, charges, filename="out_charges.xyz"):
 
 
 class ARS():
-    def __init__(self, xyz_file_name, pcube, frame_file, pcube_2=None):
+    def __init__(self, xyz_file_name, pcube, frame_file, pcube_2=None, method="bond"):
+        self.method = method
         self.c_positions_local = None
         self.c_positions_global = None
         self.atom_positions = None
@@ -197,10 +221,10 @@ class ARS():
         if pcube_2 is not None:
             self.atom_positions_plus = np.array(self.atom_positions_plus)
         
-        self.frame_vectors = get_local_axis(self.atom_positions, self.frame_atoms)
+        self.frame_vectors = get_local_axis(self.atom_positions, self.frame_atoms, method=self.method)
         
         if pcube_2 is not None:
-            self.frame_vectors_plus = get_local_axis(self.atom_positions_plus, self.frame_atoms)
+            self.frame_vectors_plus = get_local_axis(self.atom_positions_plus, self.frame_atoms, method=self.method)
 
         self.c_positions_local = self.global_to_local()
         
@@ -407,6 +431,8 @@ class ARS():
         output_filename_split = output_filename.split("/")
         output_filename = "global_" + output_filename_split[-1]
         output_filename = os.path.join(*output_filename_split[:-1], output_filename)
+        if len(output_filename.split("/"))>1 and output_filename[0] != "/":
+            output_filename = "/" + output_filename
         save_charges(self.charge_positions_plus, 
                      self.c_charges, filename = output_filename)
 
