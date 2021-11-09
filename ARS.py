@@ -97,21 +97,24 @@ def get_local_axis(atom_pos, frame_atoms, method="bond"):
         ez1 = np.array([b1_x, b1_y, b1_z])
         ez3 = np.array([b2_x, b2_y, b2_z])
         
-        #  finding ez2 for a given method
         if method=="bond":
-            """ Calculate Z defined along bond a-b
-            """
             ez2 = np.array([b1_x, b1_y, b1_z])
             
         elif method=="bisector":
             """ Calculate Z(2) as bisector
             """
-            bi_x = ez1[0] + ez1[2]
-            bi_y = ez2[0] + ez2[2]
-            bi_z = ez3[0] + ez3[2]
-            r_bi = sqrt(bi_x**2 + bi_y**2 + bi_z**2) 
-            ez2 = np.array([bi_x/r_bi, bi_y/r_bi, bi_z/r_bi])
-        
+            bi_x = ez1[0] + ez3[0]
+            bi_y = ez1[1] + ez3[1]
+            bi_z = ez1[2] + ez3[2]
+            
+            #  get norm
+            r_bi = np.sqrt(bi_x**2 + bi_y**2 + bi_z**2) 
+            #  normalize
+            ez2 = np.array([bi_x, bi_y, bi_z])/r_bi
+            
+            if r_bi < 0.0001:
+                print("Colinearity detected! (Bad)")
+            
         else:
             assert False, "No valid method supplied!"
 
@@ -125,34 +128,22 @@ def get_local_axis(atom_pos, frame_atoms, method="bond"):
         ey1[1] = ey1[1] / re_x
         ey1[2] = ey1[2] / re_x
 
-        # ey1 = np.cross(ez1, ez3)
+#         ey1 = np.cross(ez1, ez3)
 
-        ey2 = ey3 = ey1
+        ey2 = ey1
+        ey3 = ey1
+
 
         #  X axes
         ex1 = np.zeros(3)
         ex3 = np.zeros(3)
         #  ex1 and ex2
-        ex1[0] = ez1[1] * ey1[2] - ez1[2] * ey1[1]
-        ex1[1] = ez1[2] * ey1[0] - ez1[0] * ey1[2]
-        ex1[2] = ez1[0] * ey1[1] - ez1[1] * ey1[0]
-        re_x = np.sqrt(ex1[0] ** 2 + ex1[1] ** 2 + ex1[2] ** 2)
-        ex1[0] = ex1[0] / re_x
-        ex1[1] = ex1[1] / re_x
-        ex1[2] = ex1[2] / re_x
-        ex2 = ex1
         ex1 = np.cross(ey1, ez1)
-        ex2 = ex1
-
+        if method=="bond":
+            ex2 = ex1
+        else:
+            ex2 = np.cross(ey2, ez2)
         #  ex3
-        ex3[0] = ez3[1] * ey3[2] - ez3[2] * ey3[1]
-        ex3[1] = ez3[2] * ey3[0] - ez3[0] * ey3[2]
-        ex3[2] = ez3[0] * ey3[1] - ez3[1] * ey3[0]
-        re_x = np.sqrt(ex3[0] ** 2 + ex3[1] ** 2 + ex3[2] ** 2)
-        ex3[0] = ex3[0] / re_x
-        ex3[1] = ex3[1] / re_x
-        ex3[2] = ex3[2] / re_x
-
         ex3 = np.cross(ey3, ez3)
 
         frame_vectors.append(([ex1, ey1, ez1],
@@ -412,6 +403,7 @@ class ARS():
                         c_positions_local[charge][2] = local_z_pos
 
                 used_atoms.append(atom_index)
+                
         return c_positions_local
 
     def save_charges_local(self, output_filename):
@@ -497,7 +489,7 @@ if __name__ == "__main__":
         dih = [int(x) for x in sys.argv[6].split("_")]
 
 
-    ARS_obj = ARS(xyz_file_name, pcube, frame_file, pcube_2=pcube_2)
+    ARS_obj = ARS(xyz_file_name, pcube, frame_file, pcube_2=pcube_2, method="bond")
     ARS_obj.save_charges_global(output_filename)
     ARS_obj.save_charges_local(output_filename)
     print(f"Distance between Atom configurations = {ARS_obj.get_distance_atoms()}")
